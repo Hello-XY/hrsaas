@@ -1,5 +1,7 @@
 <template>
   <div class="login-container">
+    <!-- 表单校验 1，添加model属性：整个表单数据 -->
+    <!-- 表单校验 2，添加rules属性：整个表单数据校验规则 -->
     <el-form
       ref="loginForm"
       :model="loginForm"
@@ -8,31 +10,56 @@
       auto-complete="on"
       label-position="left"
     >
+      <!-- 标题图片 -->
       <div class="title-container">
         <h3 class="title">
           <img src="@/assets/common/login-logo.png" alt="" />
         </h3>
       </div>
-      <!-- 账号输入框 -->
+      <!-- 表单区域 绑定prop的值为校验规则名 -->
       <el-form-item prop="mobile">
-        <i class="el-icon-user-solid svg-container"></i>
-        <el-input v-model="loginForm.mobile"></el-input>
+        <span class="svg-container">
+          <svg-icon icon-class="user" />
+        </span>
+        <el-input
+          ref="mobile"
+          v-model="loginForm.mobile"
+          placeholder="请输入手机号"
+          name="mobile"
+          type="text"
+          tabindex="1"
+          auto-complete="on"
+        />
       </el-form-item>
-      <!-- 账号输入框 -->
-      <!-- 密码输入框 -->
+
       <el-form-item prop="password">
-        <i class="svg-container">
-          <svg-icon iconClass="password"></svg-icon>
-        </i>
-        <el-input v-model="loginForm.password" type="password"></el-input>
+        <span class="svg-container">
+          <svg-icon icon-class="password" />
+        </span>
+        <el-input
+          :key="passwordType"
+          ref="password"
+          v-model="loginForm.password"
+          :type="passwordType"
+          placeholder="请输入密码"
+          name="password"
+          tabindex="2"
+          auto-complete="on"
+          @keyup.enter.native="handleLogin"
+        />
+        <span class="show-pwd" @click="showPwd">
+          <svg-icon
+            :icon-class="passwordType === 'password' ? 'eye' : 'eye-open'"
+          />
+        </span>
       </el-form-item>
-      <!-- 密码输入框 -->
+
       <el-button
+        class="loginBtn"
+        :loading="loading"
         type="primary"
         style="width: 100%; margin-bottom: 30px"
-        class="loginBtn"
-        @click="login"
-        :loading="loginBtnLoading"
+        @click.native.prevent="handleLogin"
         >登录</el-button
       >
 
@@ -54,40 +81,59 @@ export default {
         password: '123456'
       },
       loginRules: {
-        /* 规则校验 */
+        // 规则名与数据名保持一致
         mobile: [
-          { required: true, message: '请输入手机号', trigger: 'blur' },
+          { required: true, trigger: 'blur', message: '请输入手机号' },
           {
             pattern: /^(?:(?:\+|00)86)?1[3-9]\d{9}$/,
-            message: '手机号格式错误',
-            trigger: 'blur'
+            message: '手机号码格式不正确'
           }
         ],
         password: [
-          { required: true, message: '请输入密码', trigger: 'blur' }
+          { required: true, trigger: 'blur', message: '请输入密码' }
           // {
           //   pattern:
           //     /^(?![a-zA-Z]+$)(?![A-Z0-9]+$)(?![A-Z\W_!@#$%^&*`~()-+=]+$)(?![a-z0-9]+$)(?![a-z\W_!@#$%^&*`~()-+=]+$)(?![0-9\W_!@#$%^&*`~()-+=]+$)[a-zA-Z0-9\W_!@#$%^&*`~()-+=]/,
-          //   message: '密码格式为大写字母/小写字母/数字/特殊符号，任意三项组合',
-          //   trigger: 'blur'
+          //   message: '密码格式为大写字母/小写字母/数字/特殊符号，任意三项组合'
           // }
         ]
-      }
+      },
+      loading: false,
+      passwordType: 'password',
+      redirect: undefined
+    }
+  },
+  watch: {
+    $route: {
+      handler: function (route) {
+        this.redirect = route.query && route.query.redirect
+      },
+      immediate: true
     }
   },
   methods: {
-    async login() {
+    showPwd() {
+      if (this.passwordType === 'password') {
+        this.passwordType = ''
+      } else {
+        this.passwordType = 'password'
+      }
+      this.$nextTick(() => {
+        this.$refs.password.focus()
+      })
+    },
+    // 登录
+    async handleLogin() {
       try {
-        this.loginBtnLoading = true
+        this.loading = true
         await this.$refs.loginForm.validate()
-        console.log(111)
         await this.$store.dispatch('user/getToken', this.loginForm)
         this.$router.push('/')
         this.$message.success('登录成功')
+        this.loading = false
       } catch (error) {
         console.log(error)
-      } finally {
-        this.loginBtnLoading = false
+        this.loading = false
       }
     }
   }
@@ -99,7 +145,7 @@ export default {
 /* Detail see https://github.com/PanJiaChen/vue-element-admin/pull/927 */
 
 $bg: #283443;
-$light_gray: #68b0fe; // 将输入框颜色改成蓝色
+$light_gray: #68b0fe;
 $cursor: #fff;
 
 @supports (-webkit-mask: none) and (not (cater-color: $cursor)) {
@@ -110,8 +156,6 @@ $cursor: #fff;
 
 /* reset element-ui css */
 .login-container {
-  background-image: url('~@/assets/common/login.jpg'); // 设置背景图片
-  background-position: center; // 将图片位置设置为充满整个屏幕
   .el-input {
     display: inline-block;
     height: 47px;
@@ -139,7 +183,6 @@ $cursor: #fff;
     background: rgba(255, 255, 255, 0.7); // 输入登录表单的背景色
     border-radius: 5px;
     color: #454545;
-    line-height: 1.15 !important;
   }
 
   .el-form-item__error {
@@ -156,8 +199,16 @@ $light_gray: #eee;
 .login-container {
   min-height: 100%;
   width: 100%;
-  background-color: $bg;
+  background-image: url('~@/assets/common/login.jpg'); // 设置背景图片
+  background-position: center; // 将图片位置设置为充满整个屏幕
   overflow: hidden;
+
+  .loginBtn {
+    background: #407ffe;
+    height: 64px;
+    line-height: 32px;
+    font-size: 24px;
+  }
 
   .login-form {
     position: relative;
@@ -208,13 +259,6 @@ $light_gray: #eee;
     color: $dark_gray;
     cursor: pointer;
     user-select: none;
-  }
-
-  .loginBtn {
-    background: #407ffe;
-    height: 64px;
-    line-height: 32px;
-    font-size: 24px;
   }
 }
 </style>
