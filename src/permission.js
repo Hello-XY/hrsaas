@@ -8,12 +8,12 @@ import store from '@/store'
 
 // 定义白名单
 const whiteList = ['/login', '/404']
-router.beforeEach((to, from, next) => {
+router.beforeEach(async (to, from, next) => {
   const token = store.state.user.token
   // 是否登录状态
   if (token) {
     if (!store.state.user.userInfo.userId) {
-      store.dispatch('user/getUserInfo')
+      await store.dispatch('user/getUserInfo')
     }
     // 是否进入登录页
     if (to.path === '/login') {
