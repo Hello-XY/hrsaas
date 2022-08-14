@@ -431,5 +431,15 @@ export default {
     转正日期: 'correctionTime',
     工号: 'workNumber',
     部门: 'departmentName'
-  }
+  },
+  stateOfCorrection: [
+    {
+      id: '1',
+      value: '转正'
+    },
+    {
+      id: '2',
+      value: '未转正'
+    }
+  ]
 }
