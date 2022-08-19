@@ -3,6 +3,10 @@
     <!-- 个人信息 -->
     <el-form label-width="220px">
       <!-- 工号 入职时间 -->
+      <i
+        class="el-icon-printer"
+        @click="$router.push(`/employees/printe/${userId}?type=personal`)"
+      ></i>
       <el-row class="inline-info">
         <el-col :span="12">
           <el-form-item label="工号">
@@ -403,6 +407,7 @@ import {
 } from '@/api/employess'
 import { getUserDetail } from '@/api/user'
 export default {
+  components: {},
   data() {
     return {
       userId: this.$route.params.id,
