@@ -1,4 +1,4 @@
-import router from '@/router'
+import router, { asyncRoutes } from '@/router'
 import store from '@/store'
 
 // 路由(全局)前置守卫
@@ -14,6 +14,11 @@ router.beforeEach(async (to, from, next) => {
   if (token) {
     if (!store.state.user.userInfo.userId) {
       await store.dispatch('user/getUserInfo')
+      const { roles } = await store.dispatch('user/getUserInfo')
+      console.log(roles)
+      await store.dispatch('permission/filterRoutes', roles)
+      await store.dispatch('permission/setPints', roles.points)
+      next(to.path)
     }
     // 是否进入登录页
     if (to.path === '/login') {

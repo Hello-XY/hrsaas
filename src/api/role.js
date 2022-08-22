@@ -30,3 +30,14 @@ export function getCompanyInfo(companyId) {
     url: `/company/${companyId}`
   })
 }
+
+/**
+ * 根据id获取角色详情
+ * @param {*} id 角色id
+ * @returns
+ */
+export function getRolesInfa(id) {
+  return request({
+    url: '/sys/role/' + id
+  })
+}

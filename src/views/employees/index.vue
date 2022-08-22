@@ -8,12 +8,21 @@
             size="small"
             type="warning"
             @click="$router.push('/import')"
+            :disabled="!ishas('employees-import')"
             >导入</el-button
           >
-          <el-button size="small" type="danger" @click="exportExcel"
+          <el-button
+            size="small"
+            type="danger"
+            @click="exportExcel"
+            :disabled="!ishas('employees-export')"
             >导出</el-button
           >
-          <el-button size="small" type="primary" @click="addEmployee"
+          <el-button
+            size="small"
+            type="primary"
+            @click="addEmployee"
+            v-ishas="prints.employees.import"
             >新增员工</el-button
           >
         </template>
@@ -72,7 +81,12 @@
               <el-button type="text" size="small">转正</el-button>
               <el-button type="text" size="small">调岗</el-button>
               <el-button type="text" size="small">离职</el-button>
-              <el-button type="text" size="small">角色</el-button>
+              <el-button
+                type="text"
+                size="small"
+                @click="showAssignRoleDialog(row.id)"
+                >角色</el-button
+              >
               <el-button
                 type="text"
                 size="small"
@@ -106,6 +120,7 @@
     <el-dialog title="二维码" :visible.sync="showCodeDialog">
       <canvas ref="myCanvas" />
     </el-dialog>
+    <AssignRole :visible.sync="showAssignRole" :id="currentId" />
   </div>
 </template>
 
@@ -113,11 +128,15 @@
 import { getEmployeeList, delEmployee } from '@/api/employess'
 import employess from '@/constant/employees'
 import AddEmployee from './components/add-employee.vue'
+import AssignRole from './components/assign-role.vue'
 import qrcode from 'qrcode'
+import permission from '@/mixins/permission'
+import permissions from '@/constant/permission'
 const { exportExcelMapPath, hireType } = employess
 export default {
   components: {
-    AddEmployee
+    AddEmployee,
+    AssignRole
   },
   data() {
     return {
@@ -128,9 +147,13 @@ export default {
         size: 5
       },
       showAddEmployee: false,
-      showCodeDialog: false
+      showCodeDialog: false,
+      showAssignRole: false,
+      currentId: '',
+      prints: permissions
     }
   },
+  mixins: [permission],
 
   created() {
     this.getEmployeeList()
@@ -196,6 +219,14 @@ export default {
       this.$nextTick(() => {
         qrcode.toCanvas(this.$refs.myCanvas, staffPhoto)
       })
+    },
+    showAssignRoleDialog(id) {
+      console.log(id)
+      this.currentId = id
+      this.showAssignRole = true
+    },
+    ishas(pionts) {
+      return this.$store.state.permission.prints.includes(pionts)
     }
   }
 }

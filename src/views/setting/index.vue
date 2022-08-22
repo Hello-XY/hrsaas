@@ -34,8 +34,13 @@
               width="645"
               align="center"
             >
-              <template>
-                <el-button size="small" type="success">分配权限</el-button>
+              <template slot-scope="{ row }">
+                <el-button
+                  size="small"
+                  type="success"
+                  @click="showRightsDialog(row.id)"
+                  >分配权限</el-button
+                >
                 <el-button size="small" type="primary">编辑</el-button>
                 <el-button size="small" type="danger">删除</el-button>
               </template>
@@ -99,11 +104,47 @@
         <el-button type="primary" @click="onAddRole">确 定</el-button>
       </span>
     </el-dialog>
+
+    <el-dialog
+      title="分配权限"
+      :visible.sync="setRightsDialog"
+      width="50%"
+      destroy-on-close
+      @close="setRightsClose"
+    >
+      <el-row slot="footer" type="flex" justify="center">
+        <el-tree
+          :data="permissions"
+          :default-checked-keys="defaultCheckedKeys"
+          :props="{ label: 'name' }"
+          node-key="id"
+          default-expand-all
+          show-checkbox
+          ref="treeNode"
+        ></el-tree>
+        <el-col :span="6">
+          <el-button type="primary" size="small" @click="onSaveRights"
+            >确定</el-button
+          >
+          <el-button size="small" @click="setRightsDialog = false"
+            >取消</el-button
+          >
+        </el-col>
+      </el-row>
+    </el-dialog>
   </div>
 </template>
 
 <script>
-import { getRolesApi, addRolesApi, getCompanyInfo } from '@/api/role'
+import {
+  getRolesApi,
+  addRolesApi,
+  getCompanyInfo,
+  getRolesInfa
+} from '@/api/role'
+import { getPermissionList } from '@/api/permission'
+import { assignRoles } from '@/api/employess'
+import { tranListToTreeData } from '@/utils'
 export default {
   data() {
     return {
@@ -113,20 +154,25 @@ export default {
       pageSize: 3,
       page: 1,
       dialogVisible: false,
-      addRoleFormRules: {
-        name: [{ required: true, message: '角色名称不能为空', trigger: 'blur' }]
-      },
       addRoleForm: {
         name: '',
         description: ''
       },
-      formData: {}
+      addRoleFormRules: {
+        name: [{ required: true, message: '角色名称不能为空', trigger: 'blur' }]
+      },
+      formData: {},
+      setRightsDialog: false,
+      permissions: [],
+      defaultCheckedKeys: [],
+      permIds: ''
     }
   },
 
   created() {
     this.getRoles()
     this.getCompanyInfo()
+    this.getPermissionList()
   },
 
   methods: {
@@ -163,6 +209,29 @@ export default {
         this.$store.state.user.userInfo.companyId
       )
       this.formData = res
+    },
+    async showRightsDialog(id) {
+      this.permIds = id
+      this.setRightsDialog = true
+      const res = await getRolesInfa(id)
+      console.log(res)
+      this.defaultCheckedKeys = res.permIds
+    },
+    async getPermissionList() {
+      const res = await getPermissionList()
+      this.permissions = tranListToTreeData(res, '0')
+    },
+    setRightsClose() {
+      console.log(1)
+      this.defaultCheckedKeys = []
+    },
+    async onSaveRights() {
+      await assignRoles({
+        id: this.permIds,
+        permIds: this.$refs.treeNode.getCheckedNodes()
+      })
+      this.$message.success('添加成功')
+      this.setRightsDialog = false
     }
   }
 }
